@@ -26,13 +26,7 @@
 
 
     <dependencies>
-        <!-- Jakarta Faces API -->
-        <dependency>
-            <groupId>jakarta.faces</groupId>
-            <artifactId>jakarta.faces-api</artifactId>
-            <version>${jakarta.faces.version}</version>
-            <scope>provided</scope>
-        </dependency>
+
 
         <!-- Jakarta Servlet API -->
         <dependency>

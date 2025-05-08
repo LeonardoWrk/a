@@ -23,59 +23,58 @@ import java.util.logging.Logger;
 public class SecurityFilter implements Filter {
 
     private static final Logger LOGGER = Logger.getLogger(SecurityFilter.class.getName());
-    
+
     @Inject
     private AuthenticationBean authBean;
-    
+
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         // Initialization if needed
     }
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
-        
+
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
-        
+
         String requestURI = httpRequest.getRequestURI();
         String contextPath = httpRequest.getContextPath();
-        
-        // Check if the requested page is in the secured area or requires authentication
-        boolean isSecuredPage = requestURI.contains("/secured/");
+
+        boolean isSecuredPage = requestURI.contains("/secured/") || requestURI.endsWith("/index.xhtml");
         boolean isLoginPage = requestURI.contains("/login.xhtml");
-        boolean isResourceRequest = requestURI.contains("/javax.faces.resource/") || 
-                                   requestURI.contains("/resources/");
-        
-        // Allow access to login page and resources without authentication
+        // Corrigido para reconhecer recursos JSF com prefixo jakarta.faces.resource
+        boolean isResourceRequest = requestURI.startsWith(contextPath + "/jakarta.faces.resource/")
+                                || requestURI.startsWith(contextPath + "/resources/");
+
+        LOGGER.info("Request URI: " + requestURI);
+        LOGGER.info("Is secured page: " + isSecuredPage);
+        LOGGER.info("Is login page: " + isLoginPage);
+        LOGGER.info("Is resource request: " + isResourceRequest);
+
         if (isLoginPage || isResourceRequest) {
             chain.doFilter(request, response);
             return;
         }
-        
-        // Check if user is authenticated
+
         boolean isLoggedIn = false;
-        
-        // If CDI injection fails (can happen in some containers), try to get from session
+
         if (authBean == null) {
             Object sessionAuth = httpRequest.getSession().getAttribute("authenticationBean");
             isLoggedIn = sessionAuth != null && ((AuthenticationBean) sessionAuth).isLoggedIn();
         } else {
             isLoggedIn = authBean.isLoggedIn();
         }
-        
-        // If accessing secured page without authentication, redirect to login
+
+        LOGGER.info("Is logged in: " + isLoggedIn);
+
         if (isSecuredPage && !isLoggedIn) {
             LOGGER.info("Unauthorized access attempt to " + requestURI);
-            httpResponse.sendRedirect(contextPath + "/login.xhtml");
-        } 
-        // If authenticated user tries to access login page, redirect to index
-        else if (isLoginPage && isLoggedIn) {
-            httpResponse.sendRedirect(contextPath + "/index.xhtml");
-        }
-        // Otherwise, continue with the request
-        else {
+            httpResponse.sendRedirect(contextPath + "/login.xhtml?faces-redirect=true");
+        } else if (isLoginPage && isLoggedIn) {
+            httpResponse.sendRedirect(contextPath + "/index.xhtml?faces-redirect=true");
+        } else {
             chain.doFilter(request, response);
         }
     }

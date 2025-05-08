@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 public class ApiClient {
 
     private static final Logger LOGGER = Logger.getLogger(ApiClient.class.getName());
-    private static final String API_BASE_URL = "http://localhost:8080/api"; // Replace with actual API URL
+    private static final String API_BASE_URL = "http://localhost:9090/api/clientes"; // Replace with actual API URL
     
     @Inject
     private AuthenticationBean authBean;

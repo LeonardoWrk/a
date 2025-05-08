@@ -3,6 +3,7 @@ package com.company.crs.bean;
 import com.company.crs.model.User;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.ExternalContext;
@@ -27,10 +28,10 @@ public class AuthenticationBean implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(AuthenticationBean.class.getName());
-    
+
     // API endpoint for authentication
-    private static final String AUTH_API_URL = "http://localhost:8080/api/auth/login"; // Replace with actual API URL
-    
+    private static final String AUTH_API_URL = "http://localhost:9090/api/auth/login"; // Replace with actual API URL
+
     private String username;
     private String password;
     private boolean rememberMe;
@@ -43,17 +44,17 @@ public class AuthenticationBean implements Serializable {
     public String login() {
         try {
             String jwtToken = callAuthApi();
-            
+
             if (jwtToken != null && !jwtToken.isEmpty()) {
-                // Create user and store in session
                 currentUser = new User(username, jwtToken);
-                
-                // Add default role - in a real app, roles would come from the API
                 currentUser.addRole("USER");
-                
-                // Clear password from memory
                 password = null;
-                
+
+                // Store bean in session for filter access
+                FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("authenticationBean", this);
+
+                LOGGER.info("Usuário logado: " + currentUser.getUsername() + ", Token: " + currentUser.getJwtToken());
+
                 addMessage(FacesMessage.SEVERITY_INFO, "Login Successful", "Welcome " + username);
                 return "index?faces-redirect=true";
             } else {
@@ -73,20 +74,17 @@ public class AuthenticationBean implements Serializable {
      */
     public String logout() {
         try {
-            // Clear user data
             currentUser = null;
             username = null;
             password = null;
-            
-            // Invalidate session
+
             ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
             externalContext.invalidateSession();
-            
-            return "login?faces-redirect=true";
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error during logout", e);
-            return "login?faces-redirect=true";
+            externalContext.redirect(externalContext.getRequestContextPath() + "/login.xhtml");
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Erro ao redirecionar após logout", e);
         }
+        return null;
     }
 
     /**
@@ -96,46 +94,37 @@ public class AuthenticationBean implements Serializable {
     private String callAuthApi() {
         HttpURLConnection connection = null;
         try {
-            // Create connection
             URL url = new URL(AUTH_API_URL);
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/json");
             connection.setRequestProperty("Accept", "application/json");
             connection.setDoOutput(true);
-            
-            // Create JSON payload
-            String jsonPayload = String.format("{\"username\":\"%s\",\"password\":\"%s\"}", 
-                    username, password);
-            
-            // Send request
+
+            String jsonPayload = String.format("{\"username\":\"%s\",\"password\":\"%s\"}", username, password);
+
             try (OutputStream os = connection.getOutputStream()) {
                 byte[] input = jsonPayload.getBytes(StandardCharsets.UTF_8);
                 os.write(input, 0, input.length);
             }
-            
-            // Check response code
+
             int responseCode = connection.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) {
-                // Parse response to get token
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode rootNode = mapper.readTree(connection.getInputStream());
-                
-                // Extract token from response - adjust path based on actual API response structure
-                if (rootNode.has("token")) {
-                    return rootNode.get("token").asText();
-                } else if (rootNode.has("access_token")) {
-                    return rootNode.get("access_token").asText();
+
+                if (rootNode.has("accessToken")) {
+                    return rootNode.get("accessToken").asText();
                 } else {
-                    LOGGER.warning("Token not found in API response");
+                    LOGGER.warning("Token não encontrado na resposta da API");
                     return null;
                 }
             } else {
-                LOGGER.warning("Authentication failed with response code: " + responseCode);
+                LOGGER.warning("Falha na autenticação com código de resposta: " + responseCode);
                 return null;
             }
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Error calling authentication API", e);
+            LOGGER.log(Level.SEVERE, "Erro ao chamar API de autenticação", e);
             return null;
         } finally {
             if (connection != null) {
@@ -143,23 +132,25 @@ public class AuthenticationBean implements Serializable {
             }
         }
     }
-    
+
     /**
      * Helper method to add faces messages
      */
     private void addMessage(FacesMessage.Severity severity, String summary, String detail) {
-        FacesContext.getCurrentInstance().addMessage(null, 
+        FacesContext.getCurrentInstance().addMessage(null,
                 new FacesMessage(severity, summary, detail));
     }
-    
+
     /**
      * Checks if user is logged in
      * @return true if user is authenticated
      */
     public boolean isLoggedIn() {
-        return currentUser != null;
+        boolean loggedIn = currentUser != null && currentUser.getJwtToken() != null;
+        LOGGER.info("isLoggedIn: " + loggedIn);
+        return loggedIn;
     }
-    
+
     /**
      * Gets JWT token for API calls
      * @return JWT token or null if not authenticated

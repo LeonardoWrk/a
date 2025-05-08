@@ -19,36 +19,45 @@
     
     <ui:define name="content">
         <div class="card">
-            <h2>Welcome, #{authenticationBean.currentUser.username}!</h2>
+            <h2>Welcome, #{authenticationBean.currentUser != null ? authenticationBean.currentUser.username : 'Visitante'}!</h2>
             <p>This is a secured page that requires authentication.</p>
             
-            <p:panel header="User Information" styleClass="mt-3">
-                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank ui-fluid">
-                    <p:outputLabel value="Username:" />
-                    <h:outputText value="#{authenticationBean.currentUser.username}" />
-                    
-                    <p:outputLabel value="Roles:" />
-                    <h:outputText value="#{authenticationBean.currentUser.roles}" />
-                    
-                    <p:outputLabel value="JWT Token:" />
-                    <p:inputTextarea value="#{authenticationBean.currentUser.jwtToken}" readonly="true" rows="3" />
-                </p:panelGrid>
-            </p:panel>
-            
-            <p:panel header="System Information" styleClass="mt-3">
-                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank ui-fluid">
-                    <p:outputLabel value="Session ID:" />
-                    <h:outputText value="#{facesContext.externalContext.session.id}" />
-                    
-                    <p:outputLabel value="Session Creation Time:" />
-                    <h:outputText value="#{facesContext.externalContext.session.creationTime}">
-                        <f:convertDateTime pattern="yyyy-MM-dd HH:mm:ss" />
-                    </h:outputText>
-                    
-                    <p:outputLabel value="Session Timeout:" />
-                    <h:outputText value="#{facesContext.externalContext.session.maxInactiveInterval} seconds" />
-                </p:panelGrid>
-            </p:panel>
+            <h:panelGroup rendered="#{authenticationBean.loggedIn}">
+                <p:panel header="User Information" styleClass="mt-3">
+                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank ui-fluid">
+                        <p:outputLabel for="username" value="Username:" />
+                        <h:outputText id="username" value="#{authenticationBean.currentUser.username}" />
+                        
+                        <p:outputLabel for="roles" value="Roles:" />
+                        <h:outputText id="roles" value="#{authenticationBean.currentUser.roles}" />
+                        
+                        <p:outputLabel for="token" value="JWT Token:" />
+                        <p:inputTextarea id="token" value="#{authenticationBean.currentUser.jwtToken}" readonly="true" rows="3" />
+                    </p:panelGrid>
+                </p:panel>
+                
+                <p:panel header="System Information" styleClass="mt-3">
+                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank ui-fluid">
+                        <p:outputLabel value="Session ID:" />
+                        <h:outputText value="#{facesContext.externalContext.session.id}" />
+                        
+                        <p:outputLabel value="Session Creation Time:" />
+                        <h:outputText value="#{facesContext.externalContext.session.creationTime}">
+                            <f:convertDateTime pattern="yyyy-MM-dd HH:mm:ss" />
+                        </h:outputText>
+                        
+                        <p:outputLabel value="Session Timeout:" />
+                        <h:outputText value="#{facesContext.externalContext.session.maxInactiveInterval} seconds" />
+                    </p:panelGrid>
+                </p:panel>
+            </h:panelGroup>
+
+            <h:panelGroup rendered="#{!authenticationBean.loggedIn}">
+                <p:panel header="Access Denied" styleClass="mt-3 ui-panel-danger">
+                    <p>You must be logged in to view this page.</p>
+                    <p:button value="Login" outcome="/login.xhtml" icon="pi pi-sign-in" styleClass="ui-button-primary"/>
+                </p:panel>
+            </h:panelGroup>
         </div>
     </ui:define>
 </ui:composition>
