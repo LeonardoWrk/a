@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+
+<ui:composition template="/templates/layout.xhtml">
+    <ui:define name="title">Home - Client Registration System</ui:define>
+    
+    <ui:define name="breadcrumb">
+        <p:breadCrumb>
+            <p:menuitem value="Home" url="/index.xhtml" />
+        </p:breadCrumb>
+    </ui:define>
+    
+    <ui:define name="page-title">Welcome to Client Registration System</ui:define>
+    
+    <ui:define name="content">
+        <div class="card">
+            <div class="card-title">System Overview</div>
+            
+            <p>
+                Welcome to the Client Registration System, #{authenticationBean.currentUser.username}! 
+                This application allows you to manage clients and their addresses.
+            </p>
+            
+            <p>
+                Use the menu on the left to navigate through the system features:
+            </p>
+            
+            <div class="p-grid">
+                <div class="p-col-12 p-md-4">
+                    <p:panel header="Client Management">
+                        <h:panelGrid columns="1" cellpadding="10">
+                            <p:graphicImage name="images/clients.png" width="100" rendered="false" />
+                            <h:outputText value="Register and manage clients with their information." />
+                            <p:button value="Manage Clients" icon="pi pi-users" styleClass="ui-button-success" 
+                                     outcome="/secured/dashboard" />
+                        </h:panelGrid>
+                    </p:panel>
+                </div>
+                
+                <div class="p-col-12 p-md-4">
+                    <p:panel header="Address Management">
+                        <h:panelGrid columns="1" cellpadding="10">
+                            <p:graphicImage name="images/address.png" width="100" rendered="false" />
+                            <h:outputText value="Add multiple addresses for each client." />
+                            <p:button value="Manage Addresses" icon="pi pi-map-marker" styleClass="ui-button-info" 
+                                     outcome="/secured/dashboard" />
+                        </h:panelGrid>
+                    </p:panel>
+                </div>
+                
+                <div class="p-col-12 p-md-4">
+                    <p:panel header="System Settings">
+                        <h:panelGrid columns="1" cellpadding="10">
+                            <p:graphicImage name="images/settings.png" width="100" rendered="false" />
+                            <h:outputText value="Configure system settings and user preferences." />
+                            <p:button value="Settings" icon="pi pi-cog" styleClass="ui-button-secondary" 
+                                     outcome="/secured/dashboard" />
+                        </h:panelGrid>
+                    </p:panel>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Quick Actions</div>
+            
+            <p:toolbar>
+                <p:toolbarGroup>
+                    <p:button value="New Client" icon="pi pi-plus" styleClass="ui-button-success" 
+                             outcome="/secured/dashboard" />
+                    <p:button value="List Clients" icon="pi pi-list" styleClass="ui-button-primary" 
+                             outcome="/secured/dashboard" />
+                </p:toolbarGroup>
+                
+                <p:toolbarGroup align="right">
+                    <p:button value="Dashboard" icon="pi pi-th-large" styleClass="ui-button-help" 
+                             outcome="/secured/dashboard" />
+                </p:toolbarGroup>
+            </p:toolbar>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Authentication Status</div>
+            
+            <p:panel header="Current User" toggleable="true" collapsed="true">
+                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank ui-fluid">
+                    <p:outputLabel value="Logged In:" />
+                    <h:outputText value="#{authenticationBean.loggedIn ? 'Yes' : 'No'}" />
+                    
+                    <p:outputLabel value="Username:" rendered="#{authenticationBean.loggedIn}" />
+                    <h:outputText value="#{authenticationBean.currentUser.username}" rendered="#{authenticationBean.loggedIn}" />
+                    
+                    <p:outputLabel value="Roles:" rendered="#{authenticationBean.loggedIn}" />
+                    <h:outputText value="#{authenticationBean.currentUser.roles}" rendered="#{authenticationBean.loggedIn}" />
+                </p:panelGrid>
+                
+                <f:facet name="footer">
+                    <h:form>
+                        <p:commandButton value="Logout" icon="pi pi-sign-out" 
+                                        action="#{authenticationBean.logout}" 
+                                        styleClass="ui-button-danger" 
+                                        rendered="#{authenticationBean.loggedIn}" />
+                    </h:form>
+                </f:facet>
+            </p:panel>
+        </div>
+    </ui:define>
+</ui:composition>
+</html>
